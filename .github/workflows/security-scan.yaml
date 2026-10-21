@@ -1,0 +1,40 @@
+name: Container Security Scan
+
+on:
+  workflow_run:
+    workflows:
+      - Build Vote
+      - Build Result
+      - Build Worker
+    types:
+      - completed
+
+permissions:
+  contents: read
+  packages: read
+  security-events: write
+
+jobs:
+  scan:
+    name: Scan container images
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - ghcr.io/dockersamples/example-voting-app-vote
+          - ghcr.io/dockersamples/example-voting-app-result
+          - ghcr.io/dockersamples/example-voting-app-worker
+
+    steps:
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: ${{ matrix.image }}:latest
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
