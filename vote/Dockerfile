@@ -1,32 +1,41 @@
 # base defines a base stage that uses the official python runtime base image
 FROM python:3.11-slim AS base
 
-# Add curl for healthcheck
+# Install curl for the healthcheck
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl && \
     rm -rf /var/lib/apt/lists/*
 
-# Set the application directory
 WORKDIR /usr/local/app
 
-# Install our requirements.txt
+# Install Python dependencies
 COPY requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# dev defines a stage for development, where it'll watch for filesystem changes
+# Development stage
 FROM base AS dev
+
 RUN pip install watchdog
 ENV FLASK_ENV=development
+
 CMD ["python", "app.py"]
 
-# final defines the stage that will bundle the application for production
+# Final application stage
 FROM base AS final
 
-# Copy our code from the current folder to the working directory inside the container
-COPY . .
+# Create an unprivileged application user
+RUN groupadd --system appuser && \
+    useradd --system --gid appuser --home-dir /nonexistent \
+    --shell /usr/sbin/nologin appuser
 
-# Make port 80 available for links and/or publish
+# Copy application files with safe ownership
+COPY --chown=appuser:appuser . .
+
+# Allow the app to bind to port 80 without root
+RUN setcap 'cap_net_bind_service=+ep' "$(command -v python)" || true
+
 EXPOSE 80
 
-# Define our command to be run when launching the container
+USER appuser
+
 CMD ["gunicorn", "app:app", "-b", "0.0.0.0:80", "--log-file", "-", "--access-logfile", "-", "--workers", "4", "--keep-alive", "0"]

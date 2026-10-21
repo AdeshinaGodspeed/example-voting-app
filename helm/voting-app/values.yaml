@@ -1,0 +1,30 @@
+vote:
+  image: dockersamples/examplevotingapp_vote
+  replicas: 1
+  service:
+    type: NodePort
+    port: 8080
+    nodePort: 31000
+
+result:
+  image: dockersamples/examplevotingapp_result
+  replicas: 1
+  service:
+    type: NodePort
+    port: 8081
+    nodePort: 31001
+
+worker:
+  image: dockersamples/examplevotingapp_worker
+  replicas: 1
+
+redis:
+  image: redis:alpine
+  replicas: 1
+
+db:
+  image: postgres:15-alpine
+  replicas: 1
+  username: postgres
+  password: “”
+  storage: 1Gi
