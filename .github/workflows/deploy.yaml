@@ -2,13 +2,17 @@ name: Deploy Voting App
 
 on:
   workflow_dispatch:
+  push:
+    branches
+      - main
 
 permissions:
   contents: read
 
 jobs:
   deploy:
-    name: Check deployment tools
+    name: Build and Deploy Voting App
+
     runs-on: self-hosted
     steps:
       - name: Checkout repository
@@ -19,3 +23,9 @@ jobs:
         run: kubectl version --client
       - name: Verify Helm
         run: helm version
+      - name: Build Vote images
+        run: docker build -t voting-vote:latest ./vote
+      - name: Build Result images
+        run: docker build -t voting-result:latest ./result
+      - name: Build Worker images
+        run: docker build -t voting-worker:latest ./worker
