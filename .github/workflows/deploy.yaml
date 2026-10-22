@@ -3,15 +3,20 @@ name: Deploy Voting App
 on:
 workflow_dispatch:
 
+permissions:
+contents: read
+
 jobs:
 deploy:
+name: Check deployment tools
 runs-on: self-hosted
 steps:
 - name: Checkout repository
 uses: actions/checkout@v4
 
-  - name: Check deployment tools
-    run: |
-      docker --version
-      kubectl version --client
-      helm version
+  - name: Verify Docker
+    run: docker --version
+  - name: Verify kubectl
+    run: kubectl version --client
+  - name: Verify Helm
+    run: helm version
