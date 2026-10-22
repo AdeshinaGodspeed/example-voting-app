@@ -1,22 +1,21 @@
 name: Deploy Voting App
 
 on:
-workflow_dispatch:
+  workflow_dispatch:
 
 permissions:
-contents: read
+  contents: read
 
 jobs:
-deploy:
-name: Check deployment tools
-runs-on: self-hosted
-steps:
-- name: Checkout repository
-uses: actions/checkout@v4
-
-  - name: Verify Docker
-    run: docker --version
-  - name: Verify kubectl
-    run: kubectl version --client
-  - name: Verify Helm
-    run: helm version
+  deploy:
+    name: Check deployment tools
+    runs-on: self-hosted
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Verify Docker
+        run: docker --version
+      - name: Verify kubectl
+        run: kubectl version --client
+      - name: Verify Helm
+        run: helm version
