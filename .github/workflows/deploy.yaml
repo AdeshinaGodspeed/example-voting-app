@@ -1,0 +1,17 @@
+name: Deploy Voting App
+
+on:
+workflow_dispatch:
+
+jobs:
+deploy:
+runs-on: self-hosted
+steps:
+- name: Checkout repository
+uses: actions/checkout@v4
+
+  - name: Check deployment tools
+    run: |
+      docker --version
+      kubectl version --client
+      helm version
