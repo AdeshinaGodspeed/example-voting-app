@@ -3,12 +3,14 @@ FROM python:3.11-slim AS base
 
 # Install curl for the healthcheck
 RUN apt-get update && \
+    apt-get upgrade -y && \
     apt-get install -y --no-install-recommends curl && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /usr/local/app
 
 # Install Python dependencies
+RUN python -m pip install --no-cache-dir --upgrade pip setuptools wheel
 COPY requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
