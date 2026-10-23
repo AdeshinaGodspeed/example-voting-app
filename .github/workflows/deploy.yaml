@@ -11,21 +11,53 @@ permissions:
 
 jobs:
   deploy:
-    name: Build and Deploy Voting App
+    name: Build, Scan and Deploy Voting App
 
     runs-on: self-hosted
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Verify Docker
-        run: docker --version
-      - name: Verify kubectl
-        run: kubectl version --client
-      - name: Verify Helm
-        run: helm version
-      - name: Build Vote images
+
+      - name: Verify deployment tools
+        run: |
+          docker --version
+          kubectl version --client
+          helm version
+
+      - name: Build Vote image
         run: docker build -t voting-vote:latest ./vote
-      - name: Build Result images
+
+      - name: Build Result image
         run: docker build -t voting-result:latest ./result
-      - name: Build Worker images
+
+      - name: Build Worker image
         run: docker build -t voting-worker:latest ./worker
+
+      - name: Install Trivy if missing
+        run: |
+          if ! command -v trivy >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y wget
+            wget -qO- https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+            echo "deb https://aquasecurity.github.io/trivy-repo/deb $(. /etc/os-release && echo "$VERSION_CODENAME") main" | sudo tee /etc/apt/sources.list.d/trivy.list
+            sudo apt-get update
+            sudo apt-get install -y trivy
+          fi 
+      - name: Scan images for vulnerabilities
+        run: |
+          trivy image --severity HIGH,CRITICAL --exit-code 1 voting-vote:latest
+          trivy image --severity HIGH,CRITICAL --exit-code 1 voting-result:latest
+          trivy image --severity HIGH,CRITICAL --exit-code 1 voting-worker:latest
+
+      - name: Load images into Kind
+        run: |
+          kind load docker-image voting-vote:latest --name capstone
+          kind load docker-image voting-result:latest --name capstone
+          kind load docker-image voting-worker:latest --name capstone
+
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install voting-app ./helm/voting-app \
+          --namespace capstone-app \
+          --wait \
+          --timeout 5m
