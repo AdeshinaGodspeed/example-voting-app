@@ -34,13 +34,12 @@ jobs:
         run: docker build -t voting-worker:latest ./worker
 
       - name: Install Trivy if missing
+        shell: bash
         run: |
           if ! command -v trivy >/dev/null 2>&1; then
-            sudo apt-get update -o Acquire::Retries=1 -o Acquire::http::Timeout=30
-            sudo apt-get install -y wget
-            wget -q https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.68.2_Linux-64bit.deb -O /tmp/trivy.deb
-            sudo apt-get install -y /tmp/trivy.deb
+            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
           fi
+          trivy --version
       - name: Scan images for vulnerabilities
         run: |
           trivy image --severity HIGH,CRITICAL --exit-code 1 voting-vote:latest
