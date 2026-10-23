@@ -9,8 +9,12 @@ RUN apt-get update && \
 
 WORKDIR /usr/local/app
 
-# Install Python dependencies
+# Upgrade Python packaging tools
 RUN python -m pip install --no-cache-dir --upgrade pip setuptools wheel
+
+#Upgrade vulnerable urllib3
+RUN python -m pip install --no-cache-dir --upgrade urllib3==2.8.0
+
 COPY requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
